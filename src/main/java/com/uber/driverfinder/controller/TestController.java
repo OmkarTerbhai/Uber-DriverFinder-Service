@@ -6,6 +6,7 @@ import com.uber.driverfinder.dto.TestResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -31,6 +32,11 @@ public class TestController {
         return new TestResponseDTO().builder().data("Data Received").build();
     }
 
+    @MessageMapping("/accept/{driverId}")
+    public void receiveDriverResponse(@DestinationVariable String driverId) {
+        //Call BookingService API to update the issue
+    }
+
     @Scheduled(fixedDelay = 2000)
     public void schedule() {
         this.simpMessagingTemplate.convertAndSend("/topic/schedule", "Scheduled task");
@@ -38,8 +44,9 @@ public class TestController {
 
     @PostMapping("/request")
     public ResponseEntity<Boolean> requestDrivers(@RequestBody RequestDriverDTO dto) {
+        System.out.println("In requestDrivers");
         dto.getDriverIds().stream().forEach(saveDriverLocationDto -> {
-            this.simpMessagingTemplate.convertAndSend("/topic/ride/{saveDriverLocationDto.driverId}");
+            this.simpMessagingTemplate.convertAndSend("/topic/ride/{saveDriverLocationDto.driverId}", "Ride received");
         });
         return new ResponseEntity<>(true, HttpStatus.OK);
     }

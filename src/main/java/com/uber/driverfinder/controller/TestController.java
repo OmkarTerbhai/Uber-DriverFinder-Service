@@ -1,6 +1,7 @@
 package com.uber.driverfinder.controller;
 
 import com.uber.driverfinder.dto.RequestDriverDTO;
+import com.uber.driverfinder.dto.SaveDriverLocationDto;
 import com.uber.driverfinder.dto.TestRequestDTO;
 import com.uber.driverfinder.dto.TestResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,9 @@ public class TestController {
         return new TestResponseDTO().builder().data("Data Received").build();
     }
 
-    @MessageMapping("/accept/{driverId}")
-    public void receiveDriverResponse(@DestinationVariable String driverId) {
-        //Call BookingService API to update the issue
+    @MessageMapping("/accept")
+    public void receiveDriverResponse(TestRequestDTO dto) {
+        System.out.println("Ride accepted by : " + dto.getData());
     }
 
     @Scheduled(fixedDelay = 2000)
@@ -45,9 +46,11 @@ public class TestController {
     @PostMapping("/request")
     public ResponseEntity<Boolean> requestDrivers(@RequestBody RequestDriverDTO dto) {
         System.out.println("In requestDrivers");
-        dto.getDriverIds().stream().forEach(saveDriverLocationDto -> {
-            this.simpMessagingTemplate.convertAndSend("/topic/ride/{saveDriverLocationDto.driverId}", "Ride received");
-        });
+        for(SaveDriverLocationDto saveDriverLocationDto : dto.getDriverIds()) {
+            String driverId = saveDriverLocationDto.getDriverId();
+
+            this.simpMessagingTemplate.convertAndSend("/topic/ride/" + driverId, "Ride received");
+        }
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }

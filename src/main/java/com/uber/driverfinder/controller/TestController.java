@@ -1,9 +1,11 @@
 package com.uber.driverfinder.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.driverfinder.dto.RequestDriverDTO;
 import com.uber.driverfinder.dto.SaveDriverLocationDto;
 import com.uber.driverfinder.dto.TestRequestDTO;
 import com.uber.driverfinder.dto.TestResponseDTO;
+import com.uber.driverfinder.services.MessageSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/v1/driver")
 public class TestController {
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    @Autowired
+    private MessageSender messageSender;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
@@ -35,7 +44,15 @@ public class TestController {
 
     @MessageMapping("/accept")
     public void receiveDriverResponse(TestRequestDTO dto) {
+
         System.out.println("Ride accepted by : " + dto.getData());
+        try {
+            String json = mapper.writeValueAsString(dto);
+
+            this.messageSender.send(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Scheduled(fixedDelay = 2000)

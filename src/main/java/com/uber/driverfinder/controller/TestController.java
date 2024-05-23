@@ -1,10 +1,7 @@
 package com.uber.driverfinder.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.driverfinder.dto.RequestDriverDTO;
-import com.uber.driverfinder.dto.SaveDriverLocationDto;
-import com.uber.driverfinder.dto.TestRequestDTO;
-import com.uber.driverfinder.dto.TestResponseDTO;
+import com.uber.driverfinder.dto.*;
 import com.uber.driverfinder.services.MessageSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,9 +40,9 @@ public class TestController {
     }
 
     @MessageMapping("/accept")
-    public void receiveDriverResponse(TestRequestDTO dto) {
+    public void receiveDriverResponse(UpdateBookingDTO dto) {
 
-        System.out.println("Ride accepted by : " + dto.getData());
+        System.out.println("Ride accepted by : " + dto.getDriverId());
         try {
             String json = mapper.writeValueAsString(dto);
 
@@ -66,7 +63,7 @@ public class TestController {
         for(SaveDriverLocationDto saveDriverLocationDto : dto.getDriverIds()) {
             String driverId = saveDriverLocationDto.getDriverId();
 
-            this.simpMessagingTemplate.convertAndSend("/topic/ride/" + driverId, "Ride received");
+            this.simpMessagingTemplate.convertAndSend("/topic/ride/" + driverId, dto.getBookingId());
         }
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
